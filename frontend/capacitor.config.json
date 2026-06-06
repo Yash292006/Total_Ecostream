@@ -1,0 +1,9 @@
+{
+  "appId": "com.freeify.app",
+  "appName": "EchoStream",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  }
+}
