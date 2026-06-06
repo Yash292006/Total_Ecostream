@@ -15,7 +15,14 @@ const PORT = process.env.PORT || 5000;
 
 // Enable CORS for frontend cross-origin requests
 app.use(cors({
-  origin: '*', // Allows all origins in development; adjust for production
+  origin: [
+    'https://ecostream-app.vercel.app',
+    'http://localhost:5173',
+    'http://localhost',
+    'capacitor://localhost'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true
 }));
 
 // Body parser middleware
