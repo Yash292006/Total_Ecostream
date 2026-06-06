@@ -21,26 +21,35 @@ export const AuthProvider = ({ children }) => {
   // Synchronize token state with Axios common headers and local storage
   useEffect(() => {
     if (token) {
+      console.log('Token found, configuring api client...');
       localStorage.setItem('spotify_token', token);
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
-      // Verify token viability on startup or session sync
+      // Verify token viability on startup
       if (loading) {
+        console.log('Verifying session with backend...');
         api.get('/api/auth/me')
           .then(res => {
+            console.log('Session verified successfully for user:', res.data.username);
             setUser(res.data);
             setLoading(false);
           })
           .catch(err => {
-            console.error('Session verification failed:', err);
-            // Only log out if the token is explicitly invalid or denied (401 or 403)
-            if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+            console.error('Session verification failed:', err.message);
+            // If the server returns 401/403/404, the token is dead
+            if (err.response && (err.response.status === 401 || err.response.status === 403 || err.response.status === 404)) {
+              console.log('Token invalid, logging out...');
               logout();
             }
+            // If it's a network error (e.g. Render server sleeping), don't log out yet, just stop loading
             setLoading(false);
           });
+      } else {
+        // Just sync user if loading was already false (e.g. after login)
+        setLoading(false);
       }
     } else {
+      console.log('No active session token found.');
       localStorage.removeItem('spotify_token');
       delete api.defaults.headers.common['Authorization'];
       setUser(null);

@@ -75,9 +75,13 @@ async function startServer() {
       return new Function(data.code || data.output)();
     };
 
-    const yt = await Innertube.create();
+    const yt = await Innertube.create({
+      client_type: 'WEB',
+      lang: 'en',
+      region: 'US'
+    });
     app.set('yt', yt);
-    console.log('InnerTube client successfully initialized.');
+    console.log('InnerTube client successfully initialized with WEB client config.');
 
     // 3. Start server
     app.listen(PORT, () => {

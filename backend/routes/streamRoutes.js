@@ -30,8 +30,7 @@ router.get('/:videoId', async (req, res) => {
       console.log(`[Cache Miss] Resolving streaming data for videoId: ${videoId}...`);
       format = await yt.getStreamingData(videoId, {
         type: 'audio',
-        quality: 'best',
-        client: 'ANDROID_VR'
+        quality: 'best'
       });
 
       if (format && format.url) {

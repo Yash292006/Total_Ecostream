@@ -3,7 +3,8 @@
   "appName": "EchoStream",
   "webDir": "dist",
   "server": {
-    "androidScheme": "http",
+    "androidScheme": "https",
+    "hostname": "ecostream.app",
     "cleartext": true
   }
 }
