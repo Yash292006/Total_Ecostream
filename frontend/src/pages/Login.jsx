@@ -15,6 +15,8 @@ export default function Login() {
     e.preventDefault();
     setError('');
     
+    console.log(`[Login Submit] Form data captured: Username = "${username}", Password length = ${password.length}, View = ${isLoginView ? 'Login' : 'Signup'}`);
+    
     if (!username.trim() || !password) {
       setError('Please fill in all fields.');
       return;
