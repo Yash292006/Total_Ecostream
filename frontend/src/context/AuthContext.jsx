@@ -24,17 +24,22 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('spotify_token', token);
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
-      // Verify token viability by loading profile
-      api.get('/api/auth/me')
-        .then(res => {
-          setUser(res.data);
-          setLoading(false);
-        })
-        .catch(err => {
-          console.error('Session verification failed. Logging out.', err);
-          logout();
-          setLoading(false);
-        });
+      // Verify token viability on startup or session sync
+      if (loading) {
+        api.get('/api/auth/me')
+          .then(res => {
+            setUser(res.data);
+            setLoading(false);
+          })
+          .catch(err => {
+            console.error('Session verification failed:', err);
+            // Only log out if the token is explicitly invalid or denied (401 or 403)
+            if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+              logout();
+            }
+            setLoading(false);
+          });
+      }
     } else {
       localStorage.removeItem('spotify_token');
       delete api.defaults.headers.common['Authorization'];
