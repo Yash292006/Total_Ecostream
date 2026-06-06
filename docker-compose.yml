@@ -1,67 +1,18 @@
+version: '3.8'
 
 services:
-  # The Node/Express audio streaming proxy server
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: spotify-clone-backend
+      context: ./backend      # Points Docker to the backend folder
+      dockerfile: Dockerfile  # Tells it to look for the file inside that folder
     ports:
       - "5000:5000"
     environment:
       - PORT=5000
-      - MONGO_URI=mongodb://db:27017/spotify_clone
-      - NODE_ENV=development
-    volumes:
-      - ./backend/routes:/app/routes
-      - ./backend/models:/app/models
-      - ./backend/middleware:/app/middleware
-      - ./backend/utils:/app/utils
-      - ./backend/server.js:/app/server.js
-      - ./backend/package.json:/app/package.json
-      - ./backend/.env:/app/.env
-    depends_on:
-      - db
-    networks:
-      - spotify-network
 
-  # The React Frontend
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: spotify-clone-frontend
+      context: ./frontend     # Points Docker to the frontend folder
+      dockerfile: Dockerfile  # Tells it to look for the file inside that folder
     ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
-      - ./frontend/index.html:/app/index.html
-      - ./frontend/vite.config.js:/app/vite.config.js
-      - ./frontend/tailwind.config.js:/app/tailwind.config.js
-      - ./frontend/postcss.config.js:/app/postcss.config.js
-      - ./frontend/package.json:/app/package.json
-    environment:
-      - VITE_API_URL=http://localhost:5000
-    depends_on:
-      - backend
-    networks:
-      - spotify-network
-
-  # MongoDB Instance for storing credentials and playlists
-  db:
-    image: mongo:latest
-    container_name: spotify-clone-db
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-    networks:
-      - spotify-network
-
-volumes:
-  mongo-data:
-
-networks:
-  spotify-network:
-    driver: bridge
+      - "80:80"
