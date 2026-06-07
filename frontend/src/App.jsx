@@ -1,7 +1,7 @@
 // Watermark: Yash Creations
 
-import React, { useContext } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useContext, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthContext, AuthProvider } from './context/AuthContext';
 import { PlayerProvider } from './context/PlayerContext';
@@ -11,12 +11,49 @@ import MobileNav from './components/MobileNav';
 import Search from './pages/Search';
 import Library from './pages/Library';
 import YashCreationLogo from './components/YashCreationLogo';
+import { Capacitor } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
 import './App.css';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "1028374982734-abc123xyz.apps.googleusercontent.com";
 
 function AppContent() {
   const { loading } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    // 1. Enable native background mode & disable webview sleep optimizations
+    if (window.cordova && window.cordova.plugins && window.cordova.plugins.backgroundMode) {
+      console.log('[Native] Enabling background mode service...');
+      window.cordova.plugins.backgroundMode.enable();
+      window.cordova.plugins.backgroundMode.on('activate', () => {
+        window.cordova.plugins.backgroundMode.disableWebViewOptimizations();
+      });
+    }
+
+    // 2. Register hardware back button event handler
+    let handle;
+    const registerListener = async () => {
+      handle = await CapApp.addListener('backButton', () => {
+        // If we can go back in the history, go back. Otherwise, exit the app.
+        if (window.history.state && window.history.state.idx > 0) {
+          navigate(-1);
+        } else {
+          CapApp.exitApp();
+        }
+      });
+    };
+
+    registerListener();
+
+    return () => {
+      if (handle) {
+        handle.remove();
+      }
+    };
+  }, [navigate]);
 
   if (loading) {
     return (
