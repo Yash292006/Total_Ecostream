@@ -12,6 +12,9 @@ export default function Auth() {
   const [feedback, setFeedback] = useState({ type: '', message: '' });
   const [loading, setLoading] = useState(false);
 
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const isPlaceholderClientId = !googleClientId || googleClientId === "1028374982734-abc123xyz.apps.googleusercontent.com";
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFeedback({ type: '', message: '' });
@@ -188,13 +191,19 @@ export default function Auth() {
         </div>
 
         {/* Professional Google Sign-In Integration */}
-        <div className="w-full flex justify-center">
+        <div className="w-full flex flex-col items-center gap-3">
+          {isPlaceholderClientId && (
+            <div className="w-full p-4 mb-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-500 text-xs text-left leading-relaxed">
+              <span className="font-bold block mb-1 text-sm text-yellow-400">⚠️ Google OAuth Client ID Not Configured</span>
+              Google Sign-In is currently using a placeholder Client ID. Please configure <code className="bg-zinc-900 px-1.5 py-0.5 rounded text-[11px] font-mono text-yellow-400">VITE_GOOGLE_CLIENT_ID</code> in your Netlify Environment Variables or local <code className="bg-zinc-900 px-1.5 py-0.5 rounded text-[11px] font-mono text-yellow-400">.env</code> file to enable Google Login.
+            </div>
+          )}
           {loading ? (
             <div className="w-full py-3 text-center text-sm font-semibold border border-zinc-800 rounded-full text-zinc-500">
               Handshake in progress...
             </div>
           ) : (
-            <div className="w-full custom-google-login-btn">
+            <div className="w-full custom-google-login-btn flex justify-center">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}
