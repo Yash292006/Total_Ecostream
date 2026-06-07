@@ -40,7 +40,16 @@ router.get('/', async (req, res) => {
     return res.json(formattedVideos);
   } catch (error) {
     console.error('Search error:', error.message);
-    return res.status(500).json({ error: 'Failed to search YouTube.' });
+    if (error.response) {
+      console.error('RapidAPI search response error:', {
+        status: error.response.status,
+        data: error.response.data
+      });
+    }
+    return res.status(500).json({ 
+      error: 'Failed to search YouTube.',
+      details: error.response?.data?.message || error.message
+    });
   }
 });
 
@@ -86,7 +95,16 @@ router.get('/resolve', async (req, res) => {
     });
   } catch (error) {
     console.error('Resolve error:', error.message);
-    return res.status(500).json({ error: 'Failed to resolve track on YouTube.' });
+    if (error.response) {
+      console.error('RapidAPI resolve response error:', {
+        status: error.response.status,
+        data: error.response.data
+      });
+    }
+    return res.status(500).json({ 
+      error: 'Failed to resolve track on YouTube.',
+      details: error.response?.data?.message || error.message
+    });
   }
 });
 

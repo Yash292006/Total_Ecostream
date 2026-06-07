@@ -79,8 +79,16 @@ export default function Search() {
         return updated;
       });
     } catch (err) {
-      console.error('Search query error:', err);
-      setError(err.response?.data?.error || 'Failed to search for tracks.');
+      console.error('[Search] Detailed Search query error:', {
+        message: err.message,
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data
+      });
+      const detailedErrorMessage = err.response?.data?.details 
+        ? `${err.response.data.error} Details: ${err.response.data.details}`
+        : (err.response?.data?.error || err.message || 'Failed to search for tracks.');
+      setError(detailedErrorMessage);
     } finally {
       setLoading(false);
     }
