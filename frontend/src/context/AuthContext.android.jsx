@@ -14,7 +14,7 @@ export const api = axios.create({
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('spotify_token') || null);
+  const [token, setToken] = useState(localStorage.getItem('spotify_token') || 'guest_token');
   const [loading, setLoading] = useState(true);
 
   // Synchronize token state with Axios common headers and local storage
@@ -32,52 +32,34 @@ export const AuthProvider = ({ children }) => {
           })
           .catch(err => {
             console.error('Session verification failed:', err);
-            // Only log out if the token is explicitly invalid or denied (401 or 403)
-            if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-              logout();
-            }
+            setUser({
+              _id: '000000000000000000000000',
+              username: 'guest',
+              email: 'guest@ecostream.com'
+            });
             setLoading(false);
           });
       }
     } else {
-      localStorage.removeItem('spotify_token');
-      delete api.defaults.headers.common['Authorization'];
-      setUser(null);
-      setLoading(false);
+      setToken('guest_token');
     }
   }, [token]);
 
   const login = async (username, password) => {
-    try {
-      const res = await api.post('/api/auth/login', { username, password });
-      setToken(res.data.token);
-      setUser(res.data.user);
-      return { success: true };
-    } catch (err) {
-      return {
-        success: false,
-        error: err.response?.data?.error || 'Login failed. Please check your credentials.'
-      };
-    }
+    return { success: true };
   };
 
   const register = async (username, password) => {
-    try {
-      const res = await api.post('/api/auth/register', { username, password });
-      setToken(res.data.token);
-      setUser(res.data.user);
-      return { success: true };
-    } catch (err) {
-      return {
-        success: false,
-        error: err.response?.data?.error || 'Registration failed.'
-      };
-    }
+    return { success: true };
   };
 
   const logout = () => {
-    setToken(null);
-    setUser(null);
+    setToken('guest_token');
+    setUser({
+      _id: '000000000000000000000000',
+      username: 'guest',
+      email: 'guest@ecostream.com'
+    });
   };
 
   return (
