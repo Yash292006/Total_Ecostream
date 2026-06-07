@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
@@ -45,13 +46,21 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Spotify Clone Backend is running!' });
 });
 
+// Serve static files from the 'public' folder (built React files)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Fallback for React Router (single page app)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled Server Error:', err.stack);
   res.status(500).json({ error: 'Internal Server Error', details: err.message });
 });
 
-// Initialize Innertube client and Mongoose once at startup
+// Initialize dependencies and start server once at startup
 async function startServer() {
   try {
     // 1. Connect to MongoDB
@@ -66,24 +75,7 @@ async function startServer() {
     const { seedFeaturedPlaylists } = require('./utils/seeder');
     await seedFeaturedPlaylists();
 
-    // 2. Initialize youtubei.js InnerTube client
-    console.log('Initializing youtubei.js InnerTube client...');
-    const { Innertube, Platform } = await import('youtubei.js');
-
-    // Configure JavaScript evaluator for deciphering signatures in youtubei.js
-    Platform.shim.eval = (data) => {
-      return new Function(data.code || data.output)();
-    };
-
-    const yt = await Innertube.create({
-      client_type: 'WEB',
-      lang: 'en',
-      region: 'US'
-    });
-    app.set('yt', yt);
-    console.log('InnerTube client successfully initialized with WEB client config.');
-
-    // 3. Start server
+    // 2. Start server
     app.listen(PORT, () => {
       console.log(`Server started on port ${PORT}`);
     });

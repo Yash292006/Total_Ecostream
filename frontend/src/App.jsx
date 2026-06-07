@@ -2,6 +2,7 @@
 
 import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthContext, AuthProvider } from './context/AuthContext';
 import { PlayerProvider } from './context/PlayerContext';
 import Sidebar from './components/Sidebar';
@@ -12,6 +13,8 @@ import Search from './pages/Search';
 import Library from './pages/Library';
 import YashCreationLogo from './components/YashCreationLogo';
 import './App.css';
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "1028374982734-abc123xyz.apps.googleusercontent.com";
 
 function AppContent() {
   const { token, loading } = useContext(AuthContext);
@@ -64,12 +67,14 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <PlayerProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </PlayerProvider>
-    </AuthProvider>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AuthProvider>
+        <PlayerProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </PlayerProvider>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }

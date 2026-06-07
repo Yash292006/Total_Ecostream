@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const router = express.Router();
@@ -79,6 +80,11 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Invalid username or password.' });
     }
 
+    // Verify user password exists (if user signed up via Google, they might not have a password)
+    if (!user.password) {
+      return res.status(400).json({ error: 'This account was registered using Google. Please log in with Google.' });
+    }
+
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
@@ -103,6 +109,93 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     console.error('Error logging in user:', error);
     res.status(500).json({ error: 'Login failed.', details: error.message });
+  }
+});
+
+// Route: POST /api/auth/google
+router.post('/google', async (req, res) => {
+  const { credential } = req.body;
+
+  if (!credential) {
+    return res.status(400).json({ error: 'Google credential token is required.' });
+  }
+
+  try {
+    // Verify token validity on Google tokeninfo endpoint
+    console.log('[Google Auth] Verifying ID token with Google API...');
+    const response = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+    const payload = response.data;
+
+    const { sub: googleId, email, name } = payload;
+
+    if (!googleId) {
+      return res.status(400).json({ error: 'Invalid Google token response.' });
+    }
+
+    // Check if user with this googleId exists
+    let user = await User.findOne({ googleId });
+    if (!user) {
+      console.log(`[Google Auth] No user found with googleId: ${googleId}. Attempting lookup by email: ${email}`);
+      
+      if (email) {
+        user = await User.findOne({ email });
+      }
+
+      if (user) {
+        // Link googleId to existing user
+        console.log(`[Google Auth] Linking googleId to existing account: ${user.username}`);
+        user.googleId = googleId;
+        if (!user.email) user.email = email;
+        await user.save();
+      } else {
+        // Create new account
+        let baseUsername = name || email.split('@')[0] || 'user';
+        // Normalize username to alphanumeric only
+        baseUsername = baseUsername.replace(/[^a-zA-Z0-9]/g, '');
+        if (baseUsername.length < 3) baseUsername += '123';
+
+        let username = baseUsername;
+        let isTaken = await User.findOne({ username });
+        let attempts = 0;
+        while (isTaken && attempts < 10) {
+          username = `${baseUsername}${Math.floor(100 + Math.random() * 900)}`;
+          isTaken = await User.findOne({ username });
+          attempts++;
+        }
+
+        console.log(`[Google Auth] Creating new user with username: ${username}`);
+        user = new User({
+          username,
+          email,
+          googleId
+        });
+        await user.save();
+      }
+    } else {
+      console.log(`[Google Auth] Found existing user with googleId: ${user.username}`);
+    }
+
+    // Generate backend JWT session token
+    const token = jwt.sign(
+      { id: user._id, username: user.username },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        username: user.username
+      }
+    });
+
+  } catch (error) {
+    console.error('[Google Auth] Error during Google verification:', error);
+    res.status(500).json({
+      error: 'Google login verification failed.',
+      details: error.response?.data?.error_description || error.message
+    });
   }
 });
 
