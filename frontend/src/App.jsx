@@ -29,7 +29,7 @@ function AppContent() {
     const requestNotificationPermission = async () => {
       try {
         const permStatus = await LocalNotifications.checkPermissions();
-        if (permStatus.display === 'default' || permStatus.display === 'denied') {
+        if (permStatus.display !== 'granted') {
           console.log('[Native] Requesting local notification permissions...');
           await LocalNotifications.requestPermissions();
         }
