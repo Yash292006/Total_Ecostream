@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <application
         android:allowBackup="true"
@@ -34,6 +35,14 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
+
+        <!-- Override Cordova Background Mode Service configuration to prevent crash on Android 13/14+ -->
+        <service
+            android:name="de.appplant.cordova.plugin.background.ForegroundService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="false"
+            tools:replace="android:foregroundServiceType" />
+
     </application>
 
     <!-- Permissions -->

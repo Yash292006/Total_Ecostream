@@ -279,6 +279,88 @@ export const PlayerProvider = ({ children }) => {
     localStorage.setItem('spotify_volume', clampedLevel);
   };
 
+  // Keep active control handlers in refs to avoid re-binding MediaSession handlers on every render
+  const controlsRef = useRef({});
+  useEffect(() => {
+    controlsRef.current = { togglePlay, nextTrack, prevTrack };
+  }, [togglePlay, nextTrack, prevTrack]);
+
+  // Register OS MediaSession notification and lock screen controls
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+
+    const actionHandlers = [
+      ['play', () => controlsRef.current.togglePlay?.()],
+      ['pause', () => controlsRef.current.togglePlay?.()],
+      ['previoustrack', () => controlsRef.current.prevTrack?.()],
+      ['nexttrack', () => controlsRef.current.nextTrack?.()],
+      ['seekto', (details) => {
+        if (audioRef.current) {
+          if (details.fastSeek && 'fastSeek' in audioRef.current) {
+            audioRef.current.fastSeek(details.seekTime);
+          } else {
+            audioRef.current.currentTime = details.seekTime;
+          }
+        }
+      }],
+    ];
+
+    for (const [action, handler] of actionHandlers) {
+      try {
+        navigator.mediaSession.setActionHandler(action, handler);
+      } catch (error) {
+        console.warn(`MediaSession action "${action}" not supported:`, error);
+      }
+    }
+
+    return () => {
+      for (const [action] of actionHandlers) {
+        try {
+          navigator.mediaSession.setActionHandler(action, null);
+        } catch (error) {
+          console.warn(`Failed to clean up MediaSession action "${action}":`, error);
+        }
+      }
+    };
+  }, []);
+
+  // Sync HTML5 Media Session metadata to OS lock screen & notifications
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !window.MediaMetadata || !currentTrack) return;
+
+    // Update playback state
+    navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+
+    // Update metadata details
+    navigator.mediaSession.metadata = new window.MediaMetadata({
+      title: currentTrack.title || 'Unknown Title',
+      artist: currentTrack.artist || 'Unknown Artist',
+      album: 'EchoStream',
+      artwork: [
+        {
+          src: currentTrack.thumbnail || 'https://images.unsplash.com/photo-1487180142328-0c4e37023af5?w=300',
+          sizes: '300x300',
+          type: 'image/jpeg'
+        }
+      ]
+    });
+  }, [currentTrack, isPlaying]);
+
+  // Sync seekbar position in media notification
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !currentTrack || !duration) return;
+
+    try {
+      navigator.mediaSession.setPositionState({
+        duration: duration,
+        playbackRate: audioRef.current?.playbackRate || 1.0,
+        position: currentTime
+      });
+    } catch (e) {
+      console.warn('Error setting MediaSession position state:', e);
+    }
+  }, [currentTime, duration, currentTrack]);
+
   return (
     <PlayerContext.Provider
       value={{
