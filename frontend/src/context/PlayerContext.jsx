@@ -30,6 +30,12 @@ export const PlayerProvider = ({ children }) => {
     indexRef.current = currentTrackIndex;
   }, [queue, currentTrackIndex]);
 
+  const currentTrackRef = useRef(null);
+
+  useEffect(() => {
+    currentTrackRef.current = currentTrack;
+  }, [currentTrack]);
+
   // Handle media events setup
   useEffect(() => {
     const audio = audioRef.current;
@@ -40,7 +46,14 @@ export const PlayerProvider = ({ children }) => {
     };
 
     const handleDurationChange = () => {
-      setDuration(audio.duration || 0);
+      const audioDuration = audio.duration;
+      if (audioDuration && audioDuration !== Infinity && !isNaN(audioDuration)) {
+        setDuration(audioDuration);
+      } else if (currentTrackRef.current && currentTrackRef.current.duration) {
+        setDuration(currentTrackRef.current.duration);
+      } else {
+        setDuration(0);
+      }
     };
 
     const handleEnded = () => {
