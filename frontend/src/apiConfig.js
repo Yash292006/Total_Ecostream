@@ -15,5 +15,5 @@ export const getApiUrl = () => {
   }
   
   // Otherwise, running in production/deployed environment
-  return import.meta.env.VITE_API_URL || 'https://ecostream-backend.onrender.com';
+  return import.meta.env.VITE_API_URL || 'https://total-ecostream.onrender.com';
 };

@@ -18,6 +18,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({
   origin: [
     'https://ecostream-app.vercel.app',
+    'https://total-ecostream.onrender.com',
     'http://localhost:5173',
     'http://localhost',
     'capacitor://localhost'
