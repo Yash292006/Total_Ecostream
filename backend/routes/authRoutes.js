@@ -202,6 +202,13 @@ router.post('/google', async (req, res) => {
 // Route: GET /api/auth/me (Get logged in user info)
 router.get('/me', auth, async (req, res) => {
   try {
+    if (req.user.id === '000000000000000000000000') {
+      return res.json({
+        _id: '000000000000000000000000',
+        username: 'guest',
+        email: 'guest@ecostream.com'
+      });
+    }
     const user = await User.findById(req.user.id).select('-password');
     if (!user) {
       return res.status(404).json({ error: 'User not found.' });

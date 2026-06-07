@@ -8,7 +8,6 @@ import { PlayerProvider } from './context/PlayerContext';
 import Sidebar from './components/Sidebar';
 import BottomPlayer from './components/BottomPlayer';
 import MobileNav from './components/MobileNav';
-import Login from './pages/Login';
 import Search from './pages/Search';
 import Library from './pages/Library';
 import YashCreationLogo from './components/YashCreationLogo';
@@ -17,7 +16,7 @@ import './App.css';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "1028374982734-abc123xyz.apps.googleusercontent.com";
 
 function AppContent() {
-  const { token, loading } = useContext(AuthContext);
+  const { loading } = useContext(AuthContext);
 
   if (loading) {
     return (
@@ -26,11 +25,6 @@ function AppContent() {
         <p className="text-xs uppercase font-bold tracking-wider">Syncing session...</p>
       </div>
     );
-  }
-
-  // Redirect to login if user is not authenticated
-  if (!token) {
-    return <Login />;
   }
 
   return (

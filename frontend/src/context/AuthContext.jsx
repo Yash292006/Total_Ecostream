@@ -15,7 +15,7 @@ export const api = axios.create({
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('spotify_token') || null);
+  const [token, setToken] = useState(localStorage.getItem('spotify_token') || 'guest_token');
   const [loading, setLoading] = useState(true);
 
   // Synchronize token state with Axios common headers and local storage
@@ -36,72 +36,42 @@ export const AuthProvider = ({ children }) => {
           })
           .catch(err => {
             console.error('Session verification failed:', err.message);
-            // If the server returns 401/403/404, the token is dead
-            if (err.response && (err.response.status === 401 || err.response.status === 403 || err.response.status === 404)) {
-              console.log('Token invalid, logging out...');
-              logout();
-            }
-            // If it's a network error (e.g. Render server sleeping), don't log out yet, just stop loading
+            // In bypass mode, even on network error, keep guest session active
+            setUser({
+              _id: '000000000000000000000000',
+              username: 'guest',
+              email: 'guest@ecostream.com'
+            });
             setLoading(false);
           });
       } else {
-        // Just sync user if loading was already false (e.g. after login)
         setLoading(false);
       }
     } else {
-      console.log('No active session token found.');
-      localStorage.removeItem('spotify_token');
-      delete api.defaults.headers.common['Authorization'];
-      setUser(null);
-      setLoading(false);
+      console.log('Bypass: falling back to guest_token');
+      setToken('guest_token');
     }
   }, [token]);
 
   const login = async (username, password) => {
-    try {
-      const res = await api.post('/api/auth/login', { username, password });
-      setToken(res.data.token);
-      setUser(res.data.user);
-      return { success: true };
-    } catch (err) {
-      return {
-        success: false,
-        error: err.response?.data?.error || 'Login failed. Please check your credentials.'
-      };
-    }
+    return { success: true };
   };
 
   const register = async (username, password) => {
-    try {
-      const res = await api.post('/api/auth/register', { username, password });
-      setToken(res.data.token);
-      setUser(res.data.user);
-      return { success: true };
-    } catch (err) {
-      return {
-        success: false,
-        error: err.response?.data?.error || 'Registration failed.'
-      };
-    }
+    return { success: true };
   };
 
   const logout = () => {
-    setToken(null);
-    setUser(null);
+    setToken('guest_token');
+    setUser({
+      _id: '000000000000000000000000',
+      username: 'guest',
+      email: 'guest@ecostream.com'
+    });
   };
 
   const googleLogin = async (credential) => {
-    try {
-      const res = await api.post('/api/auth/google', { credential });
-      setToken(res.data.token);
-      setUser(res.data.user);
-      return { success: true };
-    } catch (err) {
-      return {
-        success: false,
-        error: err.response?.data?.error || 'Google login failed.'
-      };
-    }
+    return { success: true };
   };
 
   return (
