@@ -174,7 +174,8 @@ export default function TrackList({ tracks, isPlaylistView = false, playlistId =
       setDownloaded(prev => ({ ...prev, [videoId]: true }));
     } catch (err) {
       console.error('Download error:', err);
-      alert(`Offline Download failed: ${err.message || 'Server connection error'}`);
+      const detailMsg = err.response?.data?.details || err.response?.data?.error || err.message;
+      alert(`Offline Download failed: ${detailMsg}`);
     } finally {
       setDownloading(prev => {
         const updated = { ...prev };

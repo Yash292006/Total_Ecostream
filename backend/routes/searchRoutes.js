@@ -15,7 +15,8 @@ router.get('/', async (req, res) => {
       params: {
         q: q,
         part: 'snippet,id',
-        maxResults: '15'
+        maxResults: '15',
+        type: 'video'
       },
       headers: {
         'x-rapidapi-host': 'youtube-v31.p.rapidapi.com',
@@ -69,7 +70,8 @@ router.get('/resolve', async (req, res) => {
       params: {
         q: query,
         part: 'snippet,id',
-        maxResults: '3'
+        maxResults: '3',
+        type: 'video'
       },
       headers: {
         'x-rapidapi-host': 'youtube-v31.p.rapidapi.com',

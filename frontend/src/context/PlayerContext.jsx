@@ -54,14 +54,20 @@ export const PlayerProvider = ({ children }) => {
       }
     };
 
+    const handleError = (e) => {
+      console.error('Audio element error event emitted:', e, audio.error);
+    };
+
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('durationchange', handleDurationChange);
     audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
 
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('durationchange', handleDurationChange);
       audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
     };
   }, []);
 
@@ -105,7 +111,8 @@ export const PlayerProvider = ({ children }) => {
         queueRef.current = updatedQueue;
         setCurrentTrack(resolved);
       } catch (err) {
-        console.error('Failed to resolve track at index:', err);
+        const detailMsg = err.response?.data?.details || err.response?.data?.error || err.message;
+        console.error('Failed to resolve track at index:', detailMsg, err);
         // Auto-play the next song if this one fails to resolve
         const nextIdx = (index + 1) % q.length;
         playTrackAtIndex(nextIdx);
@@ -180,7 +187,8 @@ export const PlayerProvider = ({ children }) => {
         setCurrentTrack(resolved);
       } catch (err) {
         console.error('Failed to resolve track on play:', err);
-        alert('Could not resolve song stream on YouTube.');
+        const detailMsg = err.response?.data?.details || err.response?.data?.error || err.message;
+        alert(`Could not resolve song stream on YouTube: ${detailMsg}`);
         return;
       }
     }

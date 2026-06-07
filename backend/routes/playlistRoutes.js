@@ -135,7 +135,8 @@ router.post('/:playlistId/tracks', async (req, res) => {
           params: {
             q: query,
             part: 'snippet,id',
-            maxResults: '3'
+            maxResults: '3',
+            type: 'video'
           },
           headers: {
             'x-rapidapi-host': 'youtube-v31.p.rapidapi.com',
