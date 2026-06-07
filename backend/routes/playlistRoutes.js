@@ -124,23 +124,42 @@ router.post('/:playlistId/tracks', async (req, res) => {
     let finalDuration = duration || 0;
     let finalArtist = artist || 'Unknown Artist';
 
-    // If videoId is missing, resolve it from YouTube on-the-fly
+    // If videoId is missing, resolve it from YouTube on-the-fly using RapidAPI
     if (!finalVideoId) {
-      const ytSearch = require('yt-search');
-      console.log(`[Resolve] Resolving videoId for "${title}" - "${artist}"...`);
+      const axios = require('axios');
+      console.log(`[Resolve] Resolving videoId from RapidAPI for "${title}" - "${artist}"...`);
       const query = `${title} ${artist || ''}`.trim();
-      const results = await ytSearch(query);
-      const videos = results.videos || [];
-      if (videos.length > 0) {
-        finalVideoId = videos[0].videoId;
-        finalThumbnail = videos[0].thumbnail || videos[0].image || '';
-        finalDuration = videos[0].seconds || 0;
-        if (!artist) {
-          finalArtist = videos[0].author ? videos[0].author.name : 'Unknown Artist';
+      
+      try {
+        const response = await axios.get('https://youtube-v31.p.rapidapi.com/search', {
+          params: {
+            q: query,
+            part: 'snippet,id',
+            maxResults: '3'
+          },
+          headers: {
+            'x-rapidapi-host': 'youtube-v31.p.rapidapi.com',
+            'x-rapidapi-key': process.env.RAPIDAPI_KEY
+          }
+        });
+
+        const items = response.data?.items || [];
+        const videos = items.filter(item => item.id && item.id.kind === 'youtube#video');
+
+        if (videos.length > 0) {
+          finalVideoId = videos[0].id.videoId;
+          finalThumbnail = videos[0].snippet.thumbnails?.high?.url || videos[0].snippet.thumbnails?.default?.url || '';
+          finalDuration = 0; // RapidAPI search doesn't return duration, default to 0
+          if (!artist) {
+            finalArtist = videos[0].snippet.channelTitle || 'Unknown Artist';
+          }
+          console.log(`[Resolve] Successfully resolved to videoId: ${finalVideoId}`);
+        } else {
+          return res.status(404).json({ error: 'Could not resolve track on YouTube.' });
         }
-        console.log(`[Resolve] Successfully resolved to videoId: ${finalVideoId}`);
-      } else {
-        return res.status(404).json({ error: 'Could not resolve track on YouTube.' });
+      } catch (err) {
+        console.error('Playlist resolve error:', err.message);
+        return res.status(500).json({ error: 'Failed to resolve track on YouTube.', details: err.message });
       }
     }
 
