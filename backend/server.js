@@ -14,15 +14,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enable CORS for frontend cross-origin requests
+// Enable CORS for frontend cross-origin requests dynamically to support Netlify, Vercel, and local builds
 app.use(cors({
-  origin: [
-    'https://ecostream-app.vercel.app',
-    'https://total-ecostream.onrender.com',
-    'http://localhost:5173',
-    'http://localhost',
-    'capacitor://localhost'
-  ],
+  origin: (origin, callback) => {
+    // Dynamically echo the origin back to resolve CORS errors on any domain
+    callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
 }));
