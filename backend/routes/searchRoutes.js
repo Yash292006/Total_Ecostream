@@ -1,5 +1,5 @@
 const express = require('express');
-const ytSearch = require('yt-search');
+const axios = require('axios');
 const router = express.Router();
 
 // Route: GET /api/search?q=query
@@ -11,28 +11,36 @@ router.get('/', async (req, res) => {
   }
 
   try {
-    // Perform YouTube search using the search query
-    const results = await ytSearch(q);
-    const videos = results.videos || [];
+    const response = await axios.get('https://youtube-v31.p.rapidapi.com/search', {
+      params: {
+        q: q,
+        part: 'snippet,id',
+        maxResults: '15'
+      },
+      headers: {
+        'x-rapidapi-host': 'youtube-v31.p.rapidapi.com',
+        'x-rapidapi-key': process.env.RAPIDAPI_KEY
+      }
+    });
+
+    // Filter out channels/playlists, keep only videos
+    const items = response.data?.items || [];
+    const videos = items.filter(item => item.id && item.id.kind === 'youtube#video');
     
-    // Format the search output into a clean, structured JSON array
-    const formattedVideos = videos.slice(0, 15).map(video => ({
-      videoId: video.videoId,
-      title: video.title,
-      artist: video.author ? video.author.name : 'Unknown Artist',
-      thumbnail: video.thumbnail || video.image,
-      duration: video.seconds,
-      timestamp: video.timestamp,
-      url: video.url
+    // Format the search output for your React frontend
+    const formattedVideos = videos.map(video => ({
+      videoId: video.id.videoId,
+      title: video.snippet.title,
+      artist: video.snippet.channelTitle,
+      thumbnail: video.snippet.thumbnails?.high?.url || video.snippet.thumbnails?.default?.url || '',
+      duration: 0, // Not strictly required for the player to launch
+      url: `https://youtube.com/watch?v=${video.id.videoId}`
     }));
 
     return res.json(formattedVideos);
   } catch (error) {
-    console.error('Error in YouTube search route:', error);
-    return res.status(500).json({ 
-      error: 'Failed to search YouTube.', 
-      details: error.message 
-    });
+    console.error('Search error:', error.message);
+    return res.status(500).json({ error: 'Failed to search YouTube.' });
   }
 });
 
@@ -47,8 +55,21 @@ router.get('/resolve', async (req, res) => {
   try {
     const query = `${title} ${artist || ''}`.trim();
     console.log(`[Resolve] Searching YouTube for query: "${query}"`);
-    const results = await ytSearch(query);
-    const videos = results.videos || [];
+    
+    const response = await axios.get('https://youtube-v31.p.rapidapi.com/search', {
+      params: {
+        q: query,
+        part: 'snippet,id',
+        maxResults: '3'
+      },
+      headers: {
+        'x-rapidapi-host': 'youtube-v31.p.rapidapi.com',
+        'x-rapidapi-key': process.env.RAPIDAPI_KEY
+      }
+    });
+
+    const items = response.data?.items || [];
+    const videos = items.filter(item => item.id && item.id.kind === 'youtube#video');
 
     if (videos.length === 0) {
       return res.status(404).json({ error: 'No matching track found on YouTube.' });
@@ -56,20 +77,16 @@ router.get('/resolve', async (req, res) => {
 
     const bestMatch = videos[0];
     return res.json({
-      videoId: bestMatch.videoId,
-      title: bestMatch.title,
-      artist: bestMatch.author ? bestMatch.author.name : (artist || 'Unknown Artist'),
-      thumbnail: bestMatch.thumbnail || bestMatch.image || '',
-      duration: bestMatch.seconds,
-      timestamp: bestMatch.timestamp,
-      url: bestMatch.url
+      videoId: bestMatch.id.videoId,
+      title: bestMatch.snippet.title,
+      artist: bestMatch.snippet.channelTitle,
+      thumbnail: bestMatch.snippet.thumbnails?.high?.url || bestMatch.snippet.thumbnails?.default?.url || '',
+      duration: 0,
+      url: `https://youtube.com/watch?v=${bestMatch.id.videoId}`
     });
   } catch (error) {
-    console.error('Error resolving track:', error);
-    return res.status(500).json({ 
-      error: 'Failed to resolve track on YouTube.', 
-      details: error.message 
-    });
+    console.error('Resolve error:', error.message);
+    return res.status(500).json({ error: 'Failed to resolve track on YouTube.' });
   }
 });
 
