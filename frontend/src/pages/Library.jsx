@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Play, Pause, Trash2, Library as LibIcon, Music, Disc, Download } from 'lucide-react';
+import { Plus, Play, Pause, Library as LibIcon, Music, Disc, Download } from 'lucide-react';
 import { AuthContext, api } from '../context/AuthContext';
 import { PlayerContext } from '../context/PlayerContext';
 import { offlineManager } from '../utils/offlineManager';
@@ -257,16 +257,6 @@ export default function Library() {
               </div>
             )}
           </div>
-
-          {!isFeatured && !isOffline && (
-            <button
-              onClick={handleDeletePlaylist}
-              className="flex items-center gap-2 text-zinc-400 hover:text-red-500 text-sm font-semibold px-4 py-2 rounded-full border border-zinc-700 hover:border-red-500/30 transition-all"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete Playlist
-            </button>
-          )}
         </div>
 
         {/* Playlist Tracks Table */}

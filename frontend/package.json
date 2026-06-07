@@ -17,6 +17,7 @@
     "@react-oauth/google": "^0.13.5",
     "axios": "^1.17.0",
     "cordova-plugin-background-mode": "^0.7.3",
+    "cordova-plugin-device": "^3.0.0",
     "lucide-react": "^1.17.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
