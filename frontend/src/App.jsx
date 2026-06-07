@@ -24,7 +24,14 @@ function AppContent() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
-    // 1. Enable native background mode & disable webview sleep optimizations
+    // 1. Request notification permission on Android 13+ to allow background media notifications
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
+        console.log('[Native] Notification permission request result:', permission);
+      });
+    }
+
+    // 2. Enable native background mode & disable webview sleep optimizations
     if (window.cordova && window.cordova.plugins && window.cordova.plugins.backgroundMode) {
       console.log('[Native] Enabling background mode service...');
       window.cordova.plugins.backgroundMode.enable();
@@ -33,15 +40,19 @@ function AppContent() {
       });
     }
 
-    // 2. Register hardware back button event handler
+    // 3. Register hardware back button event handler
     let handle;
     const registerListener = async () => {
       handle = await CapApp.addListener('backButton', () => {
-        // If we can go back in the history, go back. Otherwise, exit the app.
-        if (window.history.state && window.history.state.idx > 0) {
-          navigate(-1);
-        } else {
+        // Safe navigation check: If we are on the main search landing page with no query params, exit the app.
+        // Otherwise, navigate back.
+        const currentPath = window.location.pathname;
+        const currentSearch = window.location.search;
+
+        if (currentPath === '/search' && !currentSearch) {
           CapApp.exitApp();
+        } else {
+          navigate(-1);
         }
       });
     };
