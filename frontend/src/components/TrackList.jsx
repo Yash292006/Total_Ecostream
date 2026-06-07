@@ -196,12 +196,11 @@ export default function TrackList({ tracks, isPlaylistView = false, playlistId =
 
   return (
     <div className="w-full text-zinc-300 select-none text-left">
-      {/* Table Header */}
-      <div className="grid grid-cols-[40px_1fr_80px_40px] md:grid-cols-[50px_1fr_100px_80px_50px] gap-2 md:gap-4 px-2 md:px-4 py-2 border-b border-zinc-800 text-[10px] md:text-xs font-bold uppercase tracking-wider text-zinc-400">
+      <div className="grid grid-cols-[40px_1fr_40px_40px] md:grid-cols-[50px_1fr_100px_80px_50px] gap-2 md:gap-4 px-2 md:px-4 py-2 border-b border-zinc-800 text-[10px] md:text-xs font-bold uppercase tracking-wider text-zinc-400">
         <div className="text-center">#</div>
         <div>Title</div>
         <div className="hidden md:block">Duration</div>
-        <div className="hidden md:block text-center">Offline</div>
+        <div className="text-center font-bold"><span className="hidden md:inline">Offline</span><Download className="w-3.5 h-3.5 mx-auto md:hidden" /></div>
         <div className="text-right">Action</div>
       </div>
 
@@ -222,7 +221,7 @@ export default function TrackList({ tracks, isPlaylistView = false, playlistId =
             <div
               key={trackKey}
               onClick={() => handlePlay(track)}
-              className={`grid grid-cols-[40px_1fr_80px_40px] md:grid-cols-[50px_1fr_100px_80px_50px] gap-2 md:gap-4 px-2 md:px-4 py-2 md:py-3 items-center rounded-md cursor-pointer hover:bg-zinc-800/60 group transition-all duration-150 ${
+              className={`grid grid-cols-[40px_1fr_40px_40px] md:grid-cols-[50px_1fr_100px_80px_50px] gap-2 md:gap-4 px-2 md:px-4 py-2 md:py-3 items-center rounded-md cursor-pointer hover:bg-zinc-800/60 group transition-all duration-150 ${
                 isCurrent ? 'bg-zinc-900 text-spotify-green' : ''
               }`}
             >
@@ -270,8 +269,8 @@ export default function TrackList({ tracks, isPlaylistView = false, playlistId =
                 {formatDuration(track.duration || track.seconds)}
               </div>
 
-              {/* Premium Download Status (Offline Column - Hidden on mobile) */}
-              <div className="hidden md:flex items-center justify-center">
+              {/* Premium Download Status (Offline Column) */}
+              <div className="flex items-center justify-center">
                 <button
                   type="button"
                   onClick={(e) => handleDownload(e, track)}
