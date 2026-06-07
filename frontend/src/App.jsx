@@ -13,6 +13,7 @@ import Library from './pages/Library';
 import YashCreationLogo from './components/YashCreationLogo';
 import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import './App.css';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "1028374982734-abc123xyz.apps.googleusercontent.com";
@@ -24,20 +25,47 @@ function AppContent() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
-    // 1. Request notification permission on Android 13+ to allow background media notifications
-    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-      Notification.requestPermission().then(permission => {
-        console.log('[Native] Notification permission request result:', permission);
-      });
-    }
+    // 1. Request notification permission programmatically using native Capacitor plugin
+    const requestNotificationPermission = async () => {
+      try {
+        const permStatus = await LocalNotifications.checkPermissions();
+        if (permStatus.display === 'default' || permStatus.display === 'denied') {
+          console.log('[Native] Requesting local notification permissions...');
+          await LocalNotifications.requestPermissions();
+        }
+      } catch (err) {
+        console.error('[Native] Failed to request notification permission:', err);
+      }
+    };
+    requestNotificationPermission();
 
-    // 2. Enable native background mode & disable webview sleep optimizations
-    if (window.cordova && window.cordova.plugins && window.cordova.plugins.backgroundMode) {
-      console.log('[Native] Enabling background mode service...');
-      window.cordova.plugins.backgroundMode.enable();
-      window.cordova.plugins.backgroundMode.on('activate', () => {
-        window.cordova.plugins.backgroundMode.disableWebViewOptimizations();
-      });
+    // 2. Enable native background mode & disable webview sleep optimizations (handles startup race conditions)
+    const enableBackgroundMode = () => {
+      const bg = window.cordova?.plugins?.backgroundMode;
+      if (bg) {
+        console.log('[Native] Configuring background mode defaults...');
+        bg.setDefaults({
+          title: 'EchoStream Playback',
+          text: 'Keeping music active in the background.',
+          icon: 'icon',
+          color: '1DB954',
+          resume: true,
+          hidden: false
+        });
+        console.log('[Native] Enabling background mode service...');
+        bg.enable();
+        bg.on('activate', () => {
+          bg.disableWebViewOptimizations();
+        });
+      } else {
+        console.warn('[Native] Background mode plugin is not defined yet.');
+      }
+    };
+
+    if (window.cordova) {
+      enableBackgroundMode();
+    } else {
+      document.addEventListener('deviceready', enableBackgroundMode, false);
     }
 
     // 3. Register hardware back button event handler
@@ -63,6 +91,7 @@ function AppContent() {
       if (handle) {
         handle.remove();
       }
+      document.removeEventListener('deviceready', enableBackgroundMode);
     };
   }, [navigate]);
 
