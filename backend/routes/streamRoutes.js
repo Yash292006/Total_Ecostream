@@ -26,11 +26,23 @@ const handleStream = async (req, res) => {
 
     console.log(`[Stream] Resolved streamUrl successfully: ${streamUrl}`);
 
-    // If the request accepts JSON, send JSON. Otherwise, redirect for HTML5 audio tags.
+    // If the request accepts JSON, send JSON. Otherwise, proxy the audio stream directly.
     if (req.headers.accept && req.headers.accept.includes('application/json')) {
       return res.json({ streamUrl: streamUrl });
     } else {
-      return res.redirect(streamUrl);
+      console.log(`[Stream] Proxying audio stream from: ${streamUrl}`);
+      const audioResponse = await axios({
+        method: 'get',
+        url: streamUrl,
+        responseType: 'stream',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
+        }
+      });
+
+      res.setHeader('Content-Type', 'audio/mpeg');
+      audioResponse.data.pipe(res);
+      return;
     }
 
   } catch (error) {
